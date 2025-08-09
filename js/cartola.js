@@ -1,5 +1,5 @@
 import { db, collection, query, orderBy, getDocs, deleteDoc, doc } from "./firebase-config.js";
-import Toastify from "https://cdn.jsdelivr.net/npm/toastify-js";
+
 
 const BALANCE_KEY = "balanceActual";
 

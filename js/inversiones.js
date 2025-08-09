@@ -1,5 +1,5 @@
 import { db, collection, addDoc, query, orderBy, limit, getDocs } from "./firebase-config.js";
-import Toastify from "https://cdn.jsdelivr.net/npm/toastify-js";
+
 
 // Almacenamiento local
 const BALANCE_KEY = "balanceActual";
