@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>JADE CAPITAL - Reportes</title>
+  <title>JADE CAPITAL - Reportes</title>
   <link rel="stylesheet" href="css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.2/dist/dexie.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -25,20 +25,30 @@
         <a href="estrategia.html">Estrategia</a>
     </nav>
 
-    <!-- Sección de Análisis -->
-    <div class="analisis-container">
-      <h2>Reportes de Ganancia/Pérdida</h2>
+    <!-- Sección de Reportes -->
+    <div class="reportes-container">
+      <h2>Generar Reportes de Operaciones</h2>
       <form id="formAnalisis">
         <label for="fechaInicio">Fecha Inicio:</label>
         <input type="date" id="fechaInicio" required />
         <label for="fechaFin">Fecha Fin:</label>
         <input type="date" id="fechaFin" required />
-        <button type="submit">Analizar</button>
+        <button type="submit">Generar Reporte</button>
       </form>
-      <div id="resultadoAnalisis"></div>
+      
+      <div id="resultadoAnalisis">
+        <!-- Aquí se mostrarán los KPIs y el resumen del periodo -->
+      </div>
+
       <div class="chart-container">
         <canvas id="analisisChart"></canvas>
       </div>
+
+      <div id="monthlyComparison">
+        <!-- Aquí se mostrará la comparativa mensual -->
+      </div>
+
+      <button id="downloadPdfBtn" class="btn-export" style="display:none;">Descargar Reporte PDF</button>
     </div>
   </div>
 
