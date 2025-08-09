@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JADE CAPITAL - Reportes</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.2/dist/dexie.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="images/icono.png" alt="Icono de JADE CAPITAL">
+      <h1>JADE CAPITAL</h1>
+    </div>
+
+    <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="inversiones.html">Inversión/Retiro</a>
+        <a href="cartola.html">Cartola</a>
+        <a href="reportes.html" class="active">Reportes</a>
+        <a href="reglas.html">Reglas</a>
+        <a href="estrategia.html">Estrategia</a>
+    </nav>
+
+    <!-- Sección de Análisis -->
+    <div class="analisis-container">
+      <h2>Reportes de Ganancia/Pérdida</h2>
+      <form id="formAnalisis">
+        <label for="fechaInicio">Fecha Inicio:</label>
+        <input type="date" id="fechaInicio" required />
+        <label for="fechaFin">Fecha Fin:</label>
+        <input type="date" id="fechaFin" required />
+        <button type="submit">Analizar</button>
+      </form>
+      <div id="resultadoAnalisis"></div>
+      <div class="chart-container">
+        <canvas id="analisisChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/reportes.js"></script>
+</body>
+</html>
