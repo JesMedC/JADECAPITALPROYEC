@@ -50,13 +50,13 @@ tipoOperacionSelect.addEventListener("change", () => {
   if (tipo === "inversion") {
     retornoInput.value = "75"; // Reset to default
     retornoInput.disabled = true;
-    valorInversionManualLabel.style.display = "block";
-    valorInversionManualInput.style.display = "block";
+    valorInversionManualLabel.style.display = "block"; // Show for inversion
+    valorInversionManualInput.style.display = "block"; // Show for inversion
     resultadoOperacionDiv.style.display = "none";
   } else {
     retornoInput.disabled = false; // Habilitar para alcista/bajista
-    valorInversionManualLabel.style.display = "none";
-    valorInversionManualInput.style.display = "none";
+    valorInversionManualLabel.style.display = "none"; // Hide for alcista/bajista
+    valorInversionManualInput.style.display = "none"; // Hide for alcista/bajista
     if (tipo === "alcista" || tipo === "bajista") {
         resultadoOperacionDiv.style.display = "block";
     } else {
