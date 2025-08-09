@@ -5,13 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>JADE CAPITAL - Cartola</title>
   <link rel="stylesheet" href="css/styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.2/dist/dexie.min.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.2/dist/dexie.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 </head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="images/icono.png" alt="Icono de JADE CAPITAL">
+      <h1>JADE CAPITAL</h1>
+    </div>
+
+    <nav class="main-nav">
+      <a href="index.html">Home</a>
+      <a href="inversiones.html">Inversión/Retiro</a>
+      <a href="cartola.html" class="active">Cartola</a>
+      <a href="analisis.html">Análisis</a>
+      <a href="reglas.html">Reglas</a>
+      <a href="estrategia.html">Estrategia</a>
+    </nav>
+
+    <h2>Historial de Operaciones</h2>
+    <button id="btnExportarExcel" class="btn-export">Exportar a Excel</button>
+    <button id="btnReiniciar" class="btn-reiniciar">Reiniciar Balance</button>
+
+    <table id="tablaOperaciones">
+      <thead>
+        <tr>
+          <th>Fecha Operación</th>
+          <th>Fecha Registro</th>
+          <th>Tipo</th>
+          <th>% Retorno</th>
+          <th>Inversión (USD)</th>
+          <th>Balance Antes (USD)</th>
+          <th>Balance Después (USD)</th>
+          <th>Estado</th>
+          <th>Comentario</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script src="js/cartola.js"></script>
+</body>
 <body>
   <div class="container">
     <div class="header">

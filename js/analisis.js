@@ -1,4 +1,5 @@
-import { db, collection, query, where, orderBy, getDocs } from "./firebase-config.js";
+// Almacenamiento local
+const OPERACIONES_KEY = "operaciones";
 
 const formAnalisis = document.getElementById("formAnalisis");
 const fechaInicioInput = document.getElementById("fechaInicio");
@@ -25,23 +26,11 @@ formAnalisis.addEventListener("submit", async e => {
         return;
     }
 
-    let operacionesRango = [];
-    try {
-        const q = query(
-            collection(db, "operaciones"),
-            where("fechaRegistro", ">=", fechaInicio),
-            where("fechaRegistro", "<=", fechaFin),
-            orderBy("fechaRegistro", "asc")
-        );
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach(doc => {
-            operacionesRango.push(doc.data());
-        });
-    } catch (error) {
-        console.error("Error al obtener operaciones para análisis: ", error);
-        alert("Error al cargar datos para el análisis.");
-        return;
-    }
+    let operaciones = JSON.parse(localStorage.getItem(OPERACIONES_KEY)) || [];
+    let operacionesRango = operaciones.filter(op => {
+        const opFecha = new Date(op.fechaRegistro);
+        return opFecha >= fechaInicio && opFecha <= fechaFin;
+    });
 
     if(operacionesRango.length === 0){
         resultadoAnalisisDiv.innerHTML = "<p>No hay operaciones en el rango de fechas seleccionado.</p>";
@@ -51,6 +40,9 @@ formAnalisis.addEventListener("submit", async e => {
         }
         return;
     }
+
+    // Sort operations by date (oldest first) for balance calculation
+    operacionesRango.sort((a, b) => new Date(a.fechaRegistro) - new Date(b.fechaRegistro));
 
     let totalGanadas = 0;
     let totalPerdidas = 0;

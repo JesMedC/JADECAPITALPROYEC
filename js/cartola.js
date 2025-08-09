@@ -1,6 +1,6 @@
-import { db, collection, query, orderBy, getDocs, deleteDoc, doc } from "./firebase-config.js";
-
+// Almacenamiento local
 const BALANCE_KEY = "balanceActual";
+const OPERACIONES_KEY = "operaciones";
 
 const tablaOperacionesBody = document.querySelector("#tablaOperaciones tbody");
 const btnExportarExcel = document.getElementById("btnExportarExcel");
@@ -10,28 +10,26 @@ const btnReiniciar = document.getElementById("btnReiniciar");
 async function mostrarHistorial() {
   tablaOperacionesBody.innerHTML = "";
   try {
-    console.log("Fetching operations from Firestore...");
-    const q = query(collection(db, "operaciones"), orderBy("fechaRegistro", "desc"));
-    const querySnapshot = await getDocs(q);
-    console.log("Operations fetched.");
+    let operaciones = JSON.parse(localStorage.getItem(OPERACIONES_KEY)) || [];
 
-    if (querySnapshot.empty) {
+    if (operaciones.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
       td.colSpan = 9;
       td.textContent = "No hay operaciones registradas.";
       tr.appendChild(td);
       tablaOperacionesBody.appendChild(tr);
-      console.log("No operations found.");
       return;
     }
 
-    querySnapshot.forEach(doc => {
-      const op = doc.data();
+    // Sort operations by date (newest first) for display
+    operaciones.sort((a, b) => new Date(b.fechaRegistro) - new Date(a.fechaRegistro));
+
+    operaciones.forEach(op => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${op.fechaOperacion}</td>
-        <td>${new Date(op.fechaRegistro.seconds * 1000).toLocaleString()}</td>
+        <td>${new Date(op.fechaRegistro).toLocaleString()}</td>
         <td>${op.tipoOperacion}</td>
         <td>${op.retorno ? op.retorno + '%' : '-'}</td>
         <td>${op.inversion.toFixed(2)}</td>
@@ -42,7 +40,6 @@ async function mostrarHistorial() {
       `;
       tablaOperacionesBody.appendChild(tr);
     });
-    console.log("Operations displayed in table.");
   } catch (e) {
     console.error("Error al cargar historial: ", e);
     alert("Error al cargar el historial de operaciones.");
@@ -54,18 +51,10 @@ btnReiniciar.addEventListener("click", async () => {
   const confirmacion = confirm("¿Estás seguro de que deseas reiniciar el balance y borrar todos los registros?");
   if (confirmacion) {
     try {
-      console.log("Attempting to clear operations from Firestore...");
-      const q = query(collection(db, "operaciones"));
-      const querySnapshot = await getDocs(q);
-      const deletePromises = [];
-      querySnapshot.forEach((docItem) => {
-        deletePromises.push(deleteDoc(doc(db, "operaciones", docItem.id)));
-      });
-      await Promise.all(deletePromises);
-      localStorage.setItem(BALANCE_KEY, 0);
+      localStorage.removeItem(OPERACIONES_KEY); // Clear operations from localStorage
+      localStorage.setItem(BALANCE_KEY, 0); // Reset balance in localStorage
       alert("El balance y el historial de operaciones han sido reiniciados.");
       mostrarHistorial();
-      console.log("Operations cleared successfully!");
     } catch (e) {
       console.error("Error al reiniciar: ", e);
       alert("Error al reiniciar el balance y el historial.");
@@ -76,14 +65,7 @@ btnReiniciar.addEventListener("click", async () => {
 // Función para exportar a Excel
 async function exportarAExcel() {
   try {
-    console.log("Fetching operations for Excel export...");
-    const q = query(collection(db, "operaciones"), orderBy("fechaRegistro"));
-    const querySnapshot = await getDocs(q);
-    const operaciones = [];
-    querySnapshot.forEach(doc => {
-      operaciones.push(doc.data());
-    });
-    console.log("Operations fetched for Excel export.");
+    let operaciones = JSON.parse(localStorage.getItem(OPERACIONES_KEY)) || [];
 
     if (operaciones.length === 0) {
       alert("No hay operaciones para exportar.");
@@ -107,7 +89,7 @@ async function exportarAExcel() {
     operaciones.forEach(op => {
       datos.push([
         op.fechaOperacion,
-        new Date(op.fechaRegistro.seconds * 1000).toLocaleString(),
+        new Date(op.fechaRegistro).toLocaleString(),
         op.tipoOperacion,
         op.retorno ? op.retorno : '-',
         op.inversion.toFixed(2),
@@ -135,7 +117,6 @@ async function exportarAExcel() {
 
     XLSX.utils.book_append_sheet(wb, ws, "Operaciones");
     XLSX.writeFile(wb, `JadeCapital_Operaciones_${new Date().toISOString().slice(0,10)}.xlsx`);
-    console.log("Excel exported successfully!");
   } catch (e) {
     console.error("Error al exportar a Excel: ", e);
     alert("Error al exportar operaciones a Excel.");

@@ -1,40 +1,40 @@
 // Almacenamiento local
 const BALANCE_KEY = "balanceActual";
+const OPERACIONES_KEY = "operaciones";
 
 // Cargar el balance desde localStorage o inicializar en 0
 let balanceActual = parseFloat(localStorage.getItem(BALANCE_KEY)) || 0;
 
-// Inicializar IndexedDB con Dexie
-const db = new Dexie("JadeCapitalDB");
-db.version(2).stores({
-  operaciones: '++id, fechaOperacion, fechaRegistro, tipoOperacion, retorno, inversion, balanceAntes, balanceDespues, estado, comentario'
-}).upgrade(tx => {
-    // Permite que la base de datos se actualice sin perder datos si ya existía una versión 1
-    return tx.table("operaciones").toCollection().modify(op => {
-        op.comentario = op.comentario || ""; // Añade el campo comentario a registros antiguos
-    });
-});
+// Cargar operaciones desde localStorage o inicializar como array vacío
+let operaciones = JSON.parse(localStorage.getItem(OPERACIONES_KEY)) || [];
 
-// Elementos del DOM (declarados aquí para asegurar que estén en el ámbito correcto)
-// Estas variables se asignarán dentro del DOMContentLoaded listener
+// Elementos del DOM para el formulario de Operaciones (Alcista/Bajista)
 let formOperacion;
 let tipoOperacionSelect;
 let retornoInput;
 let resultadoOperacionDiv;
 let comentarioInput;
+
+// Elementos del DOM para el formulario de Retiro
 let formRetiro;
 let montoRetiroInput;
+
+// Elementos del DOM para el formulario de Inversión
 let formInversion;
 let montoInversionInput;
+
+// Elementos del DOM para mostrar el balance
 let balanceActualSpan;
 let valorInversionSpan;
 
+
 // Recalcula el balance global basado en la última operación
 async function recalcularBalanceGlobal() {
-    const lastOp = await db.operaciones.orderBy('id').last();
-    if (lastOp) {
-        balanceActual = lastOp.balanceDespues;
+    // Si hay operaciones, el último balance es el de la última operación
+    if (operaciones.length > 0) {
+        balanceActual = operaciones[operaciones.length - 1].balanceDespues;
     } else {
+        // Si no hay operaciones, usa el valor de localStorage o 0
         balanceActual = parseFloat(localStorage.getItem(BALANCE_KEY)) || 0;
     }
     actualizarBalanceUI();
@@ -143,28 +143,26 @@ window.addEventListener('DOMContentLoaded', async () => {
 
             const fechaOperacion = new Date().toLocaleDateString("es-ES");
 
-            try {
-                await db.operaciones.add({
-                    fechaOperacion,
-                    fechaRegistro: new Date(),
-                    tipoOperacion,
-                    retorno: (tipoOperacion === 'alcista' || tipoOperacion === 'bajista') ? retorno : null,
-                    inversion,
-                    balanceAntes,
-                    balanceDespues,
-                    estado,
-                    comentario
-                });
-                balanceActual = balanceDespues;
-                actualizarBalanceUI();
-                alert("Operación registrada con éxito.");
-                formOperacion.reset();
-                if (retornoInput) retornoInput.disabled = true; // Disable after reset
-                if (resultadoOperacionDiv) resultadoOperacionDiv.style.display = "none"; // Hide after reset
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                alert("Error al registrar la operación.");
-            }
+            // Add to local operations array
+            operaciones.push({
+                fechaOperacion,
+                fechaRegistro: new Date().toISOString(), // Store as ISO string for consistency
+                tipoOperacion,
+                retorno: (tipoOperacion === 'alcista' || tipoOperacion === 'bajista') ? retorno : null,
+                inversion,
+                balanceAntes,
+                balanceDespues,
+                estado,
+                comentario
+            });
+            localStorage.setItem(OPERACIONES_KEY, JSON.stringify(operaciones)); // Save to localStorage
+
+            balanceActual = balanceDespues;
+            actualizarBalanceUI();
+            alert("Operación registrada con éxito.");
+            formOperacion.reset();
+            if (retornoInput) retornoInput.disabled = true; // Disable after reset
+            if (resultadoOperacionDiv) resultadoOperacionDiv.style.display = "none"; // Hide after reset
         });
     } else {
         console.warn("Warning: formOperacion element not found, event listener not attached.");
@@ -190,26 +188,24 @@ window.addEventListener('DOMContentLoaded', async () => {
             const balanceAntes = balanceActual;
             const balanceDespues = balanceActual - monto;
 
-            try {
-                await db.operaciones.add({
-                    fechaOperacion,
-                    fechaRegistro: new Date(),
-                    tipoOperacion: 'retiro',
-                    retorno: null,
-                    inversion: monto,
-                    balanceAntes,
-                    balanceDespues,
-                    estado: 'completada',
-                    comentario: 'Retiro de fondos'
-                });
-                balanceActual = balanceDespues;
-                actualizarBalanceUI();
-                alert("Retiro realizado con éxito.");
-                formRetiro.reset();
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                alert("Error al realizar el retiro.");
-            }
+            // Add to local operations array
+            operaciones.push({
+                fechaOperacion,
+                fechaRegistro: new Date().toISOString(), // Store as ISO string for consistency
+                tipoOperacion: 'retiro',
+                retorno: null,
+                inversion: monto,
+                balanceAntes,
+                balanceDespues,
+                estado: 'completada',
+                comentario: 'Retiro de fondos'
+            });
+            localStorage.setItem(OPERACIONES_KEY, JSON.stringify(operaciones)); // Save to localStorage
+
+            balanceActual = balanceDespues;
+            actualizarBalanceUI();
+            alert("Retiro realizado con éxito.");
+            formRetiro.reset();
         });
     } else {
         console.warn("Warning: formRetiro element not found, event listener not attached.");
@@ -242,26 +238,24 @@ window.addEventListener('DOMContentLoaded', async () => {
             const balanceAntes = balanceActual;
             const balanceDespues = balanceActual + monto;
 
-            try {
-                await db.operaciones.add({
-                    fechaOperacion,
-                    fechaRegistro: new Date(),
-                    tipoOperacion: 'inversion',
-                    retorno: null,
-                    inversion: monto,
-                    balanceAntes,
-                    balanceDespues,
-                    estado: 'completada',
-                    comentario: 'Inversión de fondos'
-                });
-                balanceActual = balanceDespues;
-                actualizarBalanceUI();
-                alert("Inversión registrada con éxito.");
-                formInversion.reset();
-            } catch (e) {
-                console.error("Error adding investment document: ", e);
-                alert("Error al registrar la inversión.");
-            }
+            // Add to local operations array
+            operaciones.push({
+                fechaOperacion,
+                fechaRegistro: new Date().toISOString(), // Store as ISO string for consistency
+                tipoOperacion: 'inversion',
+                retorno: null,
+                inversion: monto,
+                balanceAntes,
+                balanceDespues,
+                estado: 'completada',
+                comentario: 'Inversión de fondos'
+            });
+            localStorage.setItem(OPERACIONES_KEY, JSON.stringify(operaciones)); // Save to localStorage
+
+            balanceActual = balanceDespues;
+            actualizarBalanceUI();
+            alert("Inversión registrada con éxito.");
+            formInversion.reset();
         });
     } else {
         console.warn("Warning: formInversion element not found, event listener not attached.");

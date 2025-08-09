@@ -1,20 +1,23 @@
-import { db, collection, query, orderBy, limit, getDocs } from "./firebase-config.js";
-
+// Almacenamiento local
 const BALANCE_KEY = "balanceActual";
+const OPERACIONES_KEY = "operaciones";
+
+// Cargar el balance desde localStorage o inicializar en 0
+let balanceActual = parseFloat(localStorage.getItem(BALANCE_KEY)) || 0;
+
+// Cargar operaciones desde localStorage o inicializar como array vacío
+let operaciones = JSON.parse(localStorage.getItem(OPERACIONES_KEY)) || [];
 
 const balanceActualSpan = document.getElementById("balanceActual");
 const valorInversionSpan = document.getElementById("valorInversion");
 
 // Recalcula el balance global basado en la última operación
 async function recalcularBalanceGlobal() {
-    let balanceActual = 0;
-    const q = query(collection(db, "operaciones"), orderBy("fechaRegistro", "desc"), limit(1));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-        const lastOp = querySnapshot.docs[0].data();
-        balanceActual = lastOp.balanceDespues;
+    // Si hay operaciones, el último balance es el de la última operación
+    if (operaciones.length > 0) {
+        balanceActual = operaciones[operaciones.length - 1].balanceDespues;
     } else {
+        // Si no hay operaciones, usa el valor de localStorage o 0
         balanceActual = parseFloat(localStorage.getItem(BALANCE_KEY)) || 0;
     }
     actualizarBalanceUI(balanceActual);
