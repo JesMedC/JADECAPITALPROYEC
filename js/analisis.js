@@ -27,6 +27,12 @@ formAnalisis.addEventListener("submit", async e => {
     const fechaInicio = new Date(fechaInicioStr + 'T00:00:00');
     const fechaFin = new Date(fechaFinStr + 'T23:59:59');
 
+    console.log("Analysis Date Range:");
+    console.log("  fechaInicio (input):", fechaInicioStr);
+    console.log("  fechaFin (input):", fechaFinStr);
+    console.log("  fechaInicio (parsed):", fechaInicio);
+    console.log("  fechaFin (parsed):", fechaFin);
+
     if(fechaInicio > fechaFin){
         alert("La fecha de inicio no puede ser posterior a la fecha de fin.");
         return;
@@ -38,6 +44,7 @@ formAnalisis.addEventListener("submit", async e => {
 
     let operacionesRango = operaciones.filter(op => {
         const opFecha = new Date(op.fechaRegistro);
+        console.log("  Comparing opFecha:", opFecha, "between", fechaInicio, "and", fechaFin);
         return opFecha >= fechaInicio && opFecha <= fechaFin;
     });
     console.log("Filtered operations for range:", operacionesRango);
