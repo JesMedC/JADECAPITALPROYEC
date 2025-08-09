@@ -1,3 +1,8 @@
+const formRetiro = document.getElementById("formRetiro");
+const montoRetiroInput = document.getElementById("montoRetiro");
+const formInversion = document.getElementById("formInversion");
+const montoInversionInput = document.getElementById("montoInversion");
+
 formInversion.addEventListener("submit", async e => {
     e.preventDefault();
     const monto = parseFloat(montoInversionInput.value);
