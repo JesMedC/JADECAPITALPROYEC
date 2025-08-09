@@ -13,17 +13,18 @@ const fechaFinInput = document.getElementById("fechaFin");
 const resultadoAnalisisDiv = document.getElementById("resultadoAnalisis");
 const monthlyComparisonDiv = document.getElementById("monthlyComparison");
 const downloadPdfBtn = document.getElementById("downloadPdfBtn");
+const exportDailyReportBtn = document.getElementById("exportDailyReportBtn"); // New button
 let analisisChart = null; // Variable para mantener la instancia del gráfico
 
 // Función para generar el PDF
-async function generatePdf(analysisData) {
-    const { totalGanadas, totalPerdidas, montoTotalGanado, montoTotalPerdido, totalInversiones, totalRetiros, totalOperaciones, winRate, balanceInicialRango, balanceFinalRango, gananciaPerdidaNeta, porcentajeNeto, monthlyData } = analysisData;
+async function generatePdf(analysisData, title = "Reporte de Operaciones") {
+    const { totalGanadas, totalPerdidas, montoTotalGanado, montoTotalPerdido, totalInversiones, totalRetiros, totalOperaciones, winRate, balanceInicialRango, balanceFinalRango, gananciaPerdidaNeta, porcentajeNeto, monthlyData, avgProfitPerWin, avgLossPerLoss } = analysisData;
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
     doc.setFontSize(18);
-    doc.text("Reporte de Operaciones", 10, 10);
+    doc.text(title, 10, 10);
 
     doc.setFontSize(12);
     let y = 20;
@@ -47,6 +48,8 @@ async function generatePdf(analysisData) {
     addText("Ganadas", `${totalGanadas}`);
     addText("Perdidas", `${totalPerdidas}`);
     addText("Win Rate", `${winRate.toFixed(2)}%`);
+    addText("Ganancia Promedio por Ganada", `${avgProfitPerWin.toFixed(2)} USD`);
+    addText("Pérdida Promedio por Perdida", `${avgLossPerLoss.toFixed(2)} USD`);
     addText("Monto Total Ganado (Trading)", `${montoTotalGanado.toFixed(2)} USD`);
     addText("Monto Total Perdido (Trading)", `${montoTotalPerdido.toFixed(2)} USD`);
     y += 5;
@@ -68,26 +71,17 @@ async function generatePdf(analysisData) {
         doc.addImage(chartDataUrl, 'PNG', 10, y + 10, 100, 100);
     }
 
-    doc.save("reporte_operaciones.pdf");
+    doc.save(`${title.toLowerCase().replace(/ /g, '_')}.pdf`);
 }
 
-// Manejar análisis de ganancias/pérdidas
-formAnalisis.addEventListener("submit", async e => {
-    e.preventDefault();
-    const fechaInicioStr = fechaInicioInput.value;
-    const fechaFinStr = fechaFinInput.value;
-
-    if(!fechaInicioStr || !fechaFinStr){
-        alert("Seleccione un rango de fechas válido.");
-        return;
-    }
-
-    const fechaInicio = new Date(fechaInicioStr + 'T00:00:00');
-    const fechaFin = new Date(fechaFinStr + 'T23:59:59');
+// Function to perform analysis and update UI
+async function performAnalysis(startDate, endDate) {
+    const fechaInicio = new Date(startDate + 'T00:00:00');
+    const fechaFin = new Date(endDate + 'T23:59:59');
 
     console.log("Report Date Range:");
-    console.log("  fechaInicio (input):", fechaInicioStr);
-    console.log("  fechaFin (input):", fechaFinStr);
+    console.log("  fechaInicio (input):", startDate);
+    console.log("  fechaFin (input):", endDate);
     console.log("  fechaInicio (parsed):", fechaInicio);
     console.log("  fechaFin (parsed):", fechaFin);
 
@@ -206,6 +200,8 @@ formAnalisis.addEventListener("submit", async e => {
         <p><strong>Win Rate:</strong> ${winRate.toFixed(2)}%</p>
         <p><strong>Ganancia Promedio por Ganada:</strong> ${avgProfitPerWin.toFixed(2)} USD</p>
         <p><strong>Pérdida Promedio por Perdida:</strong> ${avgLossPerLoss.toFixed(2)} USD</p>
+        <p><strong>Monto Total Ganado (Trading):</strong> ${montoTotalGanado.toFixed(2)} USD</p>
+        <p><strong>Monto Total Perdido (Trading):</strong> ${montoTotalPerdido.toFixed(2)} USD</p>
     `;
 
     monthlyComparisonDiv.innerHTML = monthlyComparisonHtml;
@@ -217,7 +213,7 @@ formAnalisis.addEventListener("submit", async e => {
         analisisChart.destroy();
     }
 
-    if (totalOperacionesTrading > 0) {
+    if (totalGanadas > 0 || totalPerdidas > 0) { // Only show chart if there are trading operations
         analisisChart = new Chart(ctx, {
             type: 'pie',
             data: {
@@ -251,14 +247,96 @@ formAnalisis.addEventListener("submit", async e => {
         });
     } else {
         // Si no hay operaciones de trading, limpia el canvas
-        const ctx = document.getElementById('analisisChart').getContext('2d');
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     }
 
     // Event listener para el botón de descarga de PDF
-    document.getElementById("downloadPdfBtn").addEventListener("click", () => {
+    downloadPdfBtn.onclick = () => {
         generatePdf({
-            totalGanadas, totalPerdidas, montoTotalGanado, montoTotalPerdido, totalInversiones, totalRetiros, totalOperaciones: totalOperacionesTrading, winRate, balanceInicialRango, balanceFinalRango, gananciaPerdidaNeta, porcentajeNeto, monthlyData
-        });
+            totalGanadas, totalPerdidas, montoTotalGanado, montoTotalPerdido, totalInversiones, totalRetiros, totalOperaciones: totalOperacionesTrading, winRate, balanceInicialRango, balanceFinalRango, gananciaPerdidaNeta, porcentajeNeto, monthlyData, avgProfitPerWin, avgLossPerLoss
+        }, `Reporte de Operaciones ${startDate} al ${endDate}`);
+    };
+}
+
+// Al cargar la página, establecer el rango de fechas por defecto y generar el reporte
+window.addEventListener("load", () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const day = today.getDate().toString().padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+
+    fechaInicioInput.value = formattedDate;
+    fechaFinInput.value = formattedDate;
+
+    // Automatically generate report for today
+    performAnalysis(formattedDate, formattedDate);
+});
+
+// Manejar el envío del formulario de análisis
+formAnalisis.addEventListener("submit", async e => {
+    e.preventDefault();
+    performAnalysis(fechaInicioInput.value, fechaFinInput.value);
+});
+
+// Function to export daily report (PDF)
+exportDailyReportBtn.addEventListener("click", async () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const day = today.getDate().toString().padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+
+    // Filter operations for today
+    let operaciones = JSON.parse(localStorage.getItem(OPERACIONES_KEY)) || [];
+    let dailyOperations = operaciones.filter(op => {
+        const opDate = new Date(op.fechaRegistro);
+        return opDate.getFullYear() === today.getFullYear() &&
+               opDate.getMonth() === today.getMonth() &&
+               opDate.getDate() === today.getDate();
     });
+
+    if (dailyOperations.length === 0) {
+        alert("No hay operaciones para el día de hoy.");
+        return;
+    }
+
+    // Perform a quick analysis for today's data to pass to PDF generator
+    let totalGanadas = 0;
+    let totalPerdidas = 0;
+    let montoTotalGanado = 0;
+    let montoTotalPerdido = 0;
+    let totalInversiones = 0;
+    let totalRetiros = 0;
+    let totalOperacionesTrading = 0;
+
+    dailyOperations.forEach(op => {
+        if (op.tipoOperacion === 'alcista' || op.op.tipoOperacion === 'bajista') {
+            totalOperacionesTrading++;
+            if (op.estado === 'ganada') {
+                totalGanadas++;
+                montoTotalGanado += op.inversion * (op.retorno / 100);
+            } else if (op.estado === 'perdida') {
+                totalPerdidas++;
+                montoTotalPerdido += op.inversion;
+            }
+        } else if (op.tipoOperacion === 'inversion') {
+            totalInversiones += op.inversion;
+        } else if (op.tipoOperacion === 'retiro') {
+            totalRetiros += op.inversion;
+        }
+    });
+
+    const winRate = totalOperacionesTrading > 0 ? (totalGanadas / totalOperacionesTrading) * 100 : 0;
+    const avgProfitPerWin = totalGanadas > 0 ? montoTotalGanado / totalGanadas : 0;
+    const avgLossPerLoss = totalPerdidas > 0 ? montoTotalPerdido / totalPerdidas : 0;
+
+    const balanceInicialRango = dailyOperations[0].balanceAntes;
+    const balanceFinalRango = dailyOperations[dailyOperations.length - 1].balanceDespues;
+    const gananciaPerdidaNeta = balanceFinalRango - balanceInicialRango;
+    const porcentajeNeto = balanceInicialRango !== 0 ? (gananciaPerdidaNeta / balanceInicialRango) * 100 : 0;
+
+    generatePdf({
+        totalGanadas, totalPerdidas, montoTotalGanado, montoTotalPerdido, totalInversiones, totalRetiros, totalOperaciones: totalOperacionesTrading, winRate, balanceInicialRango, balanceFinalRango, gananciaPerdidaNeta, porcentajeNeto, monthlyData: {}, avgProfitPerWin, avgLossPerLoss
+    }, `Reporte Diario ${formattedDate}`);
 });
