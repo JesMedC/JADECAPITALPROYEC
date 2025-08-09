@@ -15,25 +15,18 @@ db.version(2).stores({
     });
 });
 
-// Elementos del DOM para el formulario de Operaciones (Alcista/Bajista)
-const formOperacion = document.getElementById("formOperacion");
-const tipoOperacionSelect = document.getElementById("tipoOperacion");
-const retornoInput = document.getElementById("retorno");
-const resultadoOperacionDiv = document.getElementById("resultadoOperacionDiv");
-const comentarioInput = document.getElementById("comentario");
-
-// Elementos del DOM para el formulario de Retiro
-const formRetiro = document.getElementById("formRetiro");
-const montoRetiroInput = document.getElementById("montoRetiro");
-
-// Elementos del DOM para el formulario de Inversión
-const formInversion = document.getElementById("formInversion");
-const montoInversionInput = document.getElementById("montoInversion");
-
-// Elementos del DOM para mostrar el balance
-const balanceActualSpan = document.getElementById("balanceActual");
-const valorInversionSpan = document.getElementById("valorInversion");
-
+// Elementos del DOM (declarados aquí para asegurar que estén en el ámbito correcto)
+let formOperacion;
+let tipoOperacionSelect;
+let retornoInput;
+let resultadoOperacionDiv;
+let comentarioInput;
+let formRetiro;
+let montoRetiroInput;
+let formInversion;
+let montoInversionInput;
+let balanceActualSpan;
+let valorInversionSpan;
 
 // Recalcula el balance global basado en la última operación
 async function recalcularBalanceGlobal() {
@@ -179,11 +172,18 @@ formRetiro.addEventListener("submit", async e => {
 formInversion.addEventListener("submit", async e => {
     e.preventDefault();
     console.log("formInversion submit event fired!"); // Debugging log
-    console.log("montoInversionInput before value access:", montoInversionInput); // Debugging log
-    console.log("Value of montoInversionInput:", montoInversionInput.value); // Debugging log
-    console.log("Type of montoInversionInput.value:", typeof montoInversionInput.value); // Debugging log
-    const monto = parseFloat(montoInversionInput.value);
-    console.log("Parsed monto:", monto); // Debugging log
+    let monto;
+    try {
+        console.log("montoInversionInput before value access:", montoInversionInput); // Debugging log
+        monto = parseFloat(montoInversionInput.value);
+        console.log("Value of montoInversionInput:", montoInversionInput.value); // Debugging log
+        console.log("Type of montoInversionInput.value:", typeof montoInversionInput.value); // Debugging log
+        console.log("Parsed monto:", monto); // Debugging log
+    } catch (error) {
+        console.error("Error accessing montoInversionInput.value: ", error);
+        alert("Error: No se pudo obtener el monto de inversión. Por favor, recargue la página.");
+        return;
+    }
 
     if(isNaN(monto) || monto <= 0){
         alert("Ingrese un monto de inversión válido.");
