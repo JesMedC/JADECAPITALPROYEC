@@ -2,6 +2,12 @@
 const BALANCE_KEY = "balanceActual";
 const OPERACIONES_KEY = "operaciones";
 
+// Inicializar IndexedDB con Dexie
+const db = new Dexie("JadeCapitalDB");
+db.version(2).stores({
+  operaciones: '++id, fechaOperacion, fechaRegistro, tipoOperacion, retorno, inversion, balanceAntes, balanceDespues, estado, comentario'
+});
+
 const tablaOperacionesBody = document.querySelector("#tablaOperaciones tbody");
 const btnExportarExcel = document.getElementById("btnExportarExcel");
 const btnReiniciar = document.getElementById("btnReiniciar");
@@ -10,7 +16,9 @@ const btnReiniciar = document.getElementById("btnReiniciar");
 async function mostrarHistorial() {
   tablaOperacionesBody.innerHTML = "";
   try {
-    let operaciones = JSON.parse(localStorage.getItem(OPERACIONES_KEY)) || [];
+    console.log("Fetching operations from Dexie.js for Cartola...");
+    const operaciones = await db.operaciones.orderBy('id').reverse().toArray();
+    console.log("Operations fetched from Dexie.js:", operaciones);
 
     if (operaciones.length === 0) {
       const tr = document.createElement("tr");
@@ -19,6 +27,7 @@ async function mostrarHistorial() {
       td.textContent = "No hay operaciones registradas.";
       tr.appendChild(td);
       tablaOperacionesBody.appendChild(tr);
+      console.log("No operations found in Dexie.js.");
       return;
     }
 
@@ -40,6 +49,7 @@ async function mostrarHistorial() {
       `;
       tablaOperacionesBody.appendChild(tr);
     });
+    console.log("Operations displayed in table.");
   } catch (e) {
     console.error("Error al cargar historial: ", e);
     alert("Error al cargar el historial de operaciones.");
@@ -51,10 +61,12 @@ btnReiniciar.addEventListener("click", async () => {
   const confirmacion = confirm("¿Estás seguro de que deseas reiniciar el balance y borrar todos los registros?");
   if (confirmacion) {
     try {
-      localStorage.removeItem(OPERACIONES_KEY); // Clear operations from localStorage
+      console.log("Attempting to clear operations from Dexie.js...");
+      await db.operaciones.clear();
       localStorage.setItem(BALANCE_KEY, 0); // Reset balance in localStorage
       alert("El balance y el historial de operaciones han sido reiniciados.");
       mostrarHistorial();
+      console.log("Operations cleared successfully from Dexie.js!");
     } catch (e) {
       console.error("Error al reiniciar: ", e);
       alert("Error al reiniciar el balance y el historial.");
@@ -65,7 +77,9 @@ btnReiniciar.addEventListener("click", async () => {
 // Función para exportar a Excel
 async function exportarAExcel() {
   try {
-    let operaciones = JSON.parse(localStorage.getItem(OPERACIONES_KEY)) || [];
+    console.log("Fetching operations for Excel export from Dexie.js...");
+    const operaciones = await db.operaciones.orderBy('id').toArray();
+    console.log("Operations fetched for Excel export:", operaciones);
 
     if (operaciones.length === 0) {
       alert("No hay operaciones para exportar.");
@@ -117,6 +131,7 @@ async function exportarAExcel() {
 
     XLSX.utils.book_append_sheet(wb, ws, "Operaciones");
     XLSX.writeFile(wb, `JadeCapital_Operaciones_${new Date().toISOString().slice(0,10)}.xlsx`);
+    console.log("Excel exported successfully!");
   } catch (e) {
     console.error("Error al exportar a Excel: ", e);
     alert("Error al exportar operaciones a Excel.");

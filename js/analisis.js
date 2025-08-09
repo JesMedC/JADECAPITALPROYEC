@@ -26,11 +26,15 @@ formAnalisis.addEventListener("submit", async e => {
         return;
     }
 
+    console.log("Fetching operations for analysis from localStorage...");
     let operaciones = JSON.parse(localStorage.getItem(OPERACIONES_KEY)) || [];
+    console.log("Operations fetched for analysis:", operaciones);
+
     let operacionesRango = operaciones.filter(op => {
         const opFecha = new Date(op.fechaRegistro);
         return opFecha >= fechaInicio && opFecha <= fechaFin;
     });
+    console.log("Filtered operations for range:", operacionesRango);
 
     if(operacionesRango.length === 0){
         resultadoAnalisisDiv.innerHTML = "<p>No hay operaciones en el rango de fechas seleccionado.</p>";
@@ -38,6 +42,7 @@ formAnalisis.addEventListener("submit", async e => {
             analisisChart.destroy();
             analisisChart = null;
         }
+        console.log("No operations found in range for analysis.");
         return;
     }
 
