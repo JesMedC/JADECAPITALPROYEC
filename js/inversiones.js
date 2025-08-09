@@ -1,8 +1,14 @@
 // Almacenamiento local
 const BALANCE_KEY = "balanceActual";
+const OPERACIONES_KEY = "operaciones";
+
+// Función para obtener el balance actual de localStorage
+function getBalance() {
+    return parseFloat(localStorage.getItem(BALANCE_KEY)) || 0;
+}
 
 // Cargar el balance desde localStorage o inicializar en 0
-let balanceActual = parseFloat(localStorage.getItem(BALANCE_KEY)) || 0;
+let balanceActual = getBalance(); // Usar la función para inicializar
 
 // Inicializar IndexedDB con Dexie
 const db = new Dexie("JadeCapitalDB");
@@ -31,11 +37,13 @@ let valorInversionSpan;
 
 // Recalcula el balance global basado en la última operación
 async function recalcularBalanceGlobal() {
-    const lastOp = await db.operaciones.orderBy('id').last();
-    if (lastOp) {
-        balanceActual = lastOp.balanceDespues;
+    // Obtener operaciones de Dexie.js
+    const opsFromDb = await db.operaciones.orderBy('id').toArray();
+
+    if (opsFromDb.length > 0) {
+        balanceActual = opsFromDb[opsFromDb.length - 1].balanceDespues;
     } else {
-        balanceActual = parseFloat(localStorage.getItem(BALANCE_KEY)) || 0;
+        balanceActual = getBalance(); // Si no hay operaciones en DB, usar el balance de localStorage
     }
     actualizarBalanceUI();
 }
@@ -119,7 +127,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             let inversion = 0;
             let estado = "completada";
 
-            const balanceAntes = balanceActual;
+            const balanceAntes = getBalance(); // Get current balance
             let balanceDespues = balanceAntes;
 
             if (tipoOperacion === "alcista" || tipoOperacion === "bajista") {
@@ -158,7 +166,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 await db.operaciones.add(newOp);
                 console.log("Operation added to Dexie.js:", newOp);
 
-                balanceActual = balanceDespues;
+                balanceActual = balanceDespues; // Update local balanceActual
                 actualizarBalanceUI();
                 alert("Operación registrada con éxito.");
                 formOperacion.reset();
@@ -184,14 +192,15 @@ window.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            if(monto > balanceActual){
+            const currentBalance = getBalance(); // Get current balance
+            if(monto > currentBalance){
                 alert("No puede retirar más de su balance actual.");
                 return;
             }
 
             const fechaOperacion = new Date().toLocaleDateString("es-ES");
-            const balanceAntes = balanceActual;
-            const balanceDespues = balanceActual - monto;
+            const balanceAntes = currentBalance;
+            const balanceDespues = currentBalance - monto;
 
             try {
                 const newOp = {
@@ -208,7 +217,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 await db.operaciones.add(newOp);
                 console.log("Operation added to Dexie.js:", newOp);
 
-                balanceActual = balanceDespues;
+                balanceActual = balanceDespues; // Update local balanceActual
                 actualizarBalanceUI();
                 alert("Retiro realizado con éxito.");
                 formRetiro.reset();
@@ -245,8 +254,8 @@ window.addEventListener('DOMContentLoaded', async () => {
             }
 
             const fechaOperacion = new Date().toLocaleDateString("es-ES");
-            const balanceAntes = balanceActual;
-            const balanceDespues = balanceActual + monto;
+            const balanceAntes = getBalance(); // Get current balance
+            const balanceDespues = balanceAntes + monto;
 
             try {
                 const newOp = {
@@ -263,7 +272,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 await db.operaciones.add(newOp);
                 console.log("Operation added to Dexie.js:", newOp);
 
-                balanceActual = balanceDespues;
+                balanceActual = balanceDespues; // Update local balanceActual
                 actualizarBalanceUI();
                 alert("Inversión registrada con éxito.");
                 formInversion.reset();

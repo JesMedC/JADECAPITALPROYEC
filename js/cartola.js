@@ -8,6 +8,11 @@ db.version(2).stores({
   operaciones: '++id, fechaOperacion, fechaRegistro, tipoOperacion, retorno, inversion, balanceAntes, balanceDespues, estado, comentario'
 });
 
+// Función para obtener el balance actual de localStorage
+function getBalance() {
+    return parseFloat(localStorage.getItem(BALANCE_KEY)) || 0;
+}
+
 const tablaOperacionesBody = document.querySelector("#tablaOperaciones tbody");
 const btnExportarExcel = document.getElementById("btnExportarExcel");
 const btnReiniciar = document.getElementById("btnReiniciar");

@@ -1,5 +1,11 @@
 // Almacenamiento local
 const OPERACIONES_KEY = "operaciones";
+const BALANCE_KEY = "balanceActual";
+
+// Función para obtener el balance actual de localStorage
+function getBalance() {
+    return parseFloat(localStorage.getItem(BALANCE_KEY)) || 0;
+}
 
 const formAnalisis = document.getElementById("formAnalisis");
 const fechaInicioInput = document.getElementById("fechaInicio");
