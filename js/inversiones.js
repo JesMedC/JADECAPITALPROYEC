@@ -42,12 +42,12 @@ async function recalcularBalanceGlobal() {
 
 // Actualiza el balance y muestra en pantalla
 function actualizarBalanceUI() {
-  balanceActualSpan.textContent = balanceActual.toFixed(2) + " USD";
+  if (balanceActualSpan) balanceActualSpan.textContent = balanceActual.toFixed(2) + " USD";
   let inversion = 0;
   if (balanceActual >= 1) {
       inversion = Math.max(1, Math.floor(balanceActual * 0.01));
   }
-  valorInversionSpan.textContent = inversion.toFixed(2) + " USD";
+  if (valorInversionSpan) valorInversionSpan.textContent = inversion.toFixed(2) + " USD";
   localStorage.setItem(BALANCE_KEY, balanceActual);
 }
 
@@ -70,6 +70,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.log("DOM elements fetched:");
     console.log("formOperacion:", formOperacion);
     console.log("tipoOperacionSelect:", tipoOperacionSelect);
+    if (!tipoOperacionSelect) {
+        console.error("CRITICAL ERROR: tipoOperacionSelect element not found in the DOM!");
+    }
     console.log("retornoInput:", retornoInput);
     console.log("resultadoOperacionDiv:", resultadoOperacionDiv);
     console.log("comentarioInput:", comentarioInput);
@@ -77,26 +80,31 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.log("montoRetiroInput:", montoRetiroInput);
     console.log("formInversion:", formInversion);
     console.log("montoInversionInput:", montoInversionInput);
+    if (!montoInversionInput) {
+        console.error("CRITICAL ERROR: montoInversionInput element not found in the DOM!");
+    }
     console.log("balanceActualSpan:", balanceActualSpan);
     console.log("valorInversionSpan:", valorInversionSpan);
 
 
     // Manejo de cambios en tipo de operación (Alcista/Bajista)
-    if (tipoOperacionSelect) { // Check if element exists
+    if (tipoOperacionSelect) { // Explicitly check if element exists
         tipoOperacionSelect.addEventListener("change", () => {
             const tipo = tipoOperacionSelect.value;
             // For alcista/bajista, enable retorno input and show resultadoOperacionDiv
-            retornoInput.disabled = false; 
-            resultadoOperacionDiv.style.display = "block";
+            if (retornoInput) retornoInput.disabled = false; 
+            if (resultadoOperacionDiv) resultadoOperacionDiv.style.display = "block";
             actualizarBalanceUI();
         });
+    } else {
+        console.warn("Warning: tipoOperacionSelect element not found, event listener not attached.");
     }
 
     // Al cargar página, recalcular balance
     await recalcularBalanceGlobal();
 
     // Manejar envío de formulario de operaciones (Alcista/Bajista)
-    if (formOperacion) { // Check if element exists
+    if (formOperacion) { // Explicitly check if element exists
         formOperacion.addEventListener("submit", async e => {
             e.preventDefault();
 
@@ -151,17 +159,19 @@ window.addEventListener('DOMContentLoaded', async () => {
                 actualizarBalanceUI();
                 alert("Operación registrada con éxito.");
                 formOperacion.reset();
-                retornoInput.disabled = true; // Disable after reset
-                resultadoOperacionDiv.style.display = "none"; // Hide after reset
+                if (retornoInput) retornoInput.disabled = true; // Disable after reset
+                if (resultadoOperacionDiv) resultadoOperacionDiv.style.display = "none"; // Hide after reset
             } catch (e) {
                 console.error("Error adding document: ", e);
                 alert("Error al registrar la operación.");
             }
         });
+    } else {
+        console.warn("Warning: formOperacion element not found, event listener not attached.");
     }
 
     // Manejar formulario de retiro
-    if (formRetiro) { // Check if element exists
+    if (formRetiro) { // Explicitly check if element exists
         formRetiro.addEventListener("submit", async e => {
             e.preventDefault();
             const monto = parseFloat(montoRetiroInput.value);
@@ -201,10 +211,12 @@ window.addEventListener('DOMContentLoaded', async () => {
                 alert("Error al realizar el retiro.");
             }
         });
+    } else {
+        console.warn("Warning: formRetiro element not found, event listener not attached.");
     }
 
     // Manejar formulario de inversión
-    if (formInversion) { // Check if element exists
+    if (formInversion) { // Explicitly check if element exists
         formInversion.addEventListener("submit", async e => {
             e.preventDefault();
             console.log("formInversion submit event fired!"); // Debugging log
@@ -251,5 +263,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 alert("Error al registrar la inversión.");
             }
         });
+    } else {
+        console.warn("Warning: formInversion element not found, event listener not attached.");
     }
 });
