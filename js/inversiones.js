@@ -1,6 +1,5 @@
 import { db, collection, addDoc, query, orderBy, limit, getDocs } from "./firebase-config.js";
 
-
 // Almacenamiento local
 const BALANCE_KEY = "balanceActual";
 
@@ -72,14 +71,7 @@ formOperacion.addEventListener("submit", async e => {
 
     const comentario = comentarioInput.value.trim();
     if (comentario.split(/\s+/).length > 10) {
-        Toastify({
-            text: "El comentario no puede tener más de 10 palabras.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-        }).showToast();
+        alert("El comentario no puede tener más de 10 palabras.");
         return;
     }
 
@@ -95,14 +87,7 @@ formOperacion.addEventListener("submit", async e => {
         inversion = Math.max(1, Math.floor(balanceActual * 0.01));
 
         if (balanceActual < inversion) {
-            Toastify({
-                text: `No tienes suficiente balance para la inversión mínima de ${inversion.toFixed(2)} USD.`, 
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-            }).showToast();
+            alert(`No tienes suficiente balance para la inversión mínima de ${inversion.toFixed(2)} USD.`);
             return;
         }
         const resultado = document.querySelector('input[name="resultado"]:checked').value;
@@ -120,6 +105,7 @@ formOperacion.addEventListener("submit", async e => {
     const fechaOperacion = new Date().toLocaleDateString("es-ES");
 
     try {
+        console.log("Attempting to add document to Firestore...");
         await addDoc(collection(db, "operaciones"), {
             fechaOperacion,
             fechaRegistro: new Date(),
@@ -131,29 +117,16 @@ formOperacion.addEventListener("submit", async e => {
             estado,
             comentario
         });
+        console.log("Document added successfully!");
         balanceActual = balanceDespues;
         actualizarBalanceUI();
-        Toastify({
-            text: "Operación registrada con éxito.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
-        }).showToast();
+        alert("Operación registrada con éxito.");
         formOperacion.reset();
         retornoInput.disabled = true; // Disable after reset
         resultadoOperacionDiv.style.display = "none"; // Hide after reset
     } catch (e) {
-        console.error("Error adding document: ", e);
-        Toastify({
-            text: "Error al registrar la operación.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-        }).showToast();
+        console.error("Error adding document to Firestore: ", e);
+        alert("Error al registrar la operación.");
     }
 });
 
@@ -163,26 +136,12 @@ formRetiro.addEventListener("submit", async e => {
     const monto = parseFloat(montoRetiroInput.value);
 
     if(isNaN(monto) || monto <= 0){
-        Toastify({
-            text: "Ingrese un monto de retiro válido.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-        }).showToast();
+        alert("Ingrese un monto de retiro válido.");
         return;
     }
 
     if(monto > balanceActual){
-        Toastify({
-            text: "No puede retirar más de su balance actual.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-        }).showToast();
+        alert("No puede retirar más de su balance actual.");
         return;
     }
 
@@ -191,6 +150,7 @@ formRetiro.addEventListener("submit", async e => {
     const balanceDespues = balanceActual - monto;
 
     try {
+        console.log("Attempting to add withdrawal document to Firestore...");
         await addDoc(collection(db, "operaciones"), {
             fechaOperacion,
             fechaRegistro: new Date(),
@@ -202,27 +162,14 @@ formRetiro.addEventListener("submit", async e => {
             estado: 'completada',
             comentario: 'Retiro de fondos'
         });
+        console.log("Withdrawal document added successfully!");
         balanceActual = balanceDespues;
         actualizarBalanceUI();
-        Toastify({
-            text: "Retiro realizado con éxito.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
-        }).showToast();
+        alert("Retiro realizado con éxito.");
         formRetiro.reset();
     } catch (e) {
-        console.error("Error adding document: ", e);
-        Toastify({
-            text: "Error al realizar el retiro.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-        }).showToast();
+        console.error("Error adding withdrawal document to Firestore: ", e);
+        alert("Error al realizar el retiro.");
     }
 });
 
@@ -232,14 +179,7 @@ formInversion.addEventListener("submit", async e => {
     const monto = parseFloat(montoInversionInput.value);
 
     if(isNaN(monto) || monto <= 0){
-        Toastify({
-            text: "Ingrese un monto de inversión válido.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-        }).showToast();
+        alert("Ingrese un monto de inversión válido.");
         return;
     }
 
@@ -248,6 +188,7 @@ formInversion.addEventListener("submit", async e => {
     const balanceDespues = balanceActual + monto;
 
     try {
+        console.log("Attempting to add investment document to Firestore...");
         await addDoc(collection(db, "operaciones"), {
             fechaOperacion,
             fechaRegistro: new Date(),
@@ -259,26 +200,13 @@ formInversion.addEventListener("submit", async e => {
             estado: 'completada',
             comentario: 'Inversión de fondos'
         });
+        console.log("Investment document added successfully!");
         balanceActual = balanceDespues;
         actualizarBalanceUI();
-        Toastify({
-            text: "Inversión registrada con éxito.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
-        }).showToast();
+        alert("Inversión registrada con éxito.");
         formInversion.reset();
     } catch (e) {
-        console.error("Error adding investment document: ", e);
-        Toastify({
-            text: "Error al registrar la inversión.",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-        }).showToast();
+        console.error("Error adding investment document to Firestore: ", e);
+        alert("Error al registrar la inversión.");
     }
 });

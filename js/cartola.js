@@ -1,6 +1,5 @@
 import { db, collection, query, orderBy, getDocs, deleteDoc, doc } from "./firebase-config.js";
 
-
 const BALANCE_KEY = "balanceActual";
 
 const tablaOperacionesBody = document.querySelector("#tablaOperaciones tbody");
@@ -11,8 +10,10 @@ const btnReiniciar = document.getElementById("btnReiniciar");
 async function mostrarHistorial() {
   tablaOperacionesBody.innerHTML = "";
   try {
+    console.log("Fetching operations from Firestore...");
     const q = query(collection(db, "operaciones"), orderBy("fechaRegistro", "desc"));
     const querySnapshot = await getDocs(q);
+    console.log("Operations fetched.");
 
     if (querySnapshot.empty) {
       const tr = document.createElement("tr");
@@ -21,6 +22,7 @@ async function mostrarHistorial() {
       td.textContent = "No hay operaciones registradas.";
       tr.appendChild(td);
       tablaOperacionesBody.appendChild(tr);
+      console.log("No operations found.");
       return;
     }
 
@@ -40,16 +42,10 @@ async function mostrarHistorial() {
       `;
       tablaOperacionesBody.appendChild(tr);
     });
+    console.log("Operations displayed in table.");
   } catch (e) {
     console.error("Error al cargar historial: ", e);
-    Toastify({
-        text: "Error al cargar el historial de operaciones.",
-        duration: 3000,
-        close: true,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-    }).showToast();
+    alert("Error al cargar el historial de operaciones.");
   }
 }
 
@@ -58,6 +54,7 @@ btnReiniciar.addEventListener("click", async () => {
   const confirmacion = confirm("¿Estás seguro de que deseas reiniciar el balance y borrar todos los registros?");
   if (confirmacion) {
     try {
+      console.log("Attempting to clear operations from Firestore...");
       const q = query(collection(db, "operaciones"));
       const querySnapshot = await getDocs(q);
       const deletePromises = [];
@@ -66,25 +63,12 @@ btnReiniciar.addEventListener("click", async () => {
       });
       await Promise.all(deletePromises);
       localStorage.setItem(BALANCE_KEY, 0);
-      Toastify({
-          text: "El balance y el historial de operaciones han sido reiniciados.",
-          duration: 3000,
-          close: true,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
-      }).showToast();
+      alert("El balance y el historial de operaciones han sido reiniciados.");
       mostrarHistorial();
+      console.log("Operations cleared successfully!");
     } catch (e) {
       console.error("Error al reiniciar: ", e);
-      Toastify({
-          text: "Error al reiniciar el balance y el historial.",
-          duration: 3000,
-          close: true,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-      }).showToast();
+      alert("Error al reiniciar el balance y el historial.");
     }
   }
 });
@@ -92,22 +76,17 @@ btnReiniciar.addEventListener("click", async () => {
 // Función para exportar a Excel
 async function exportarAExcel() {
   try {
+    console.log("Fetching operations for Excel export...");
     const q = query(collection(db, "operaciones"), orderBy("fechaRegistro"));
     const querySnapshot = await getDocs(q);
     const operaciones = [];
     querySnapshot.forEach(doc => {
       operaciones.push(doc.data());
     });
+    console.log("Operations fetched for Excel export.");
 
     if (operaciones.length === 0) {
-      Toastify({
-        text: "No hay operaciones para exportar.",
-        duration: 3000,
-        close: true,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-      }).showToast();
+      alert("No hay operaciones para exportar.");
       return;
     }
 
@@ -156,16 +135,10 @@ async function exportarAExcel() {
 
     XLSX.utils.book_append_sheet(wb, ws, "Operaciones");
     XLSX.writeFile(wb, `JadeCapital_Operaciones_${new Date().toISOString().slice(0,10)}.xlsx`);
+    console.log("Excel exported successfully!");
   } catch (e) {
     console.error("Error al exportar a Excel: ", e);
-    Toastify({
-        text: "Error al exportar operaciones a Excel.",
-        duration: 3000,
-        close: true,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
-    }).showToast();
+    alert("Error al exportar operaciones a Excel.");
   }
 }
 
