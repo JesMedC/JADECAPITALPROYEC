@@ -13,6 +13,50 @@ const fechaFinInput = document.getElementById("fechaFin");
 const resultadoAnalisisDiv = document.getElementById("resultadoAnalisis");
 let analisisChart = null; // Variable para mantener la instancia del gráfico
 
+// Función para generar el PDF
+async function generatePdf(analysisData) {
+    const { totalGanadas, totalPerdidas, montoTotalGanado, montoTotalPerdido, totalInversiones, totalRetiros, totalOperaciones, winRate, balanceInicialRango, balanceFinalRango, gananciaPerdidaNeta, porcentajeNeto } = analysisData;
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Resumen de Análisis de Operaciones", 10, 10);
+
+    doc.setFontSize(12);
+    let y = 20;
+
+    const addText = (label, value) => {
+        doc.text(`${label}: ${value}`, 10, y);
+        y += 7;
+    };
+
+    addText("Periodo", `${fechaInicioInput.value} al ${fechaFinInput.value}`);
+    addText("Balance Inicial", `${balanceInicialRango.toFixed(2)} USD`);
+    addText("Balance Final", `${balanceFinalRango.toFixed(2)} USD`);
+    addText("Ganancia/Pérdida Neta", `${gananciaPerdidaNeta.toFixed(2)} USD (${porcentajeNeto.toFixed(2)}%)`);
+    y += 5;
+
+    addText("Total Invertido", `${totalInversiones.toFixed(2)} USD`);
+    addText("Total Retirado", `${totalRetiros.toFixed(2)} USD`);
+    y += 5;
+
+    addText("Operaciones (Trading)", `${totalOperaciones}`);
+    addText("Ganadas", `${totalGanadas}`);
+    addText("Perdidas", `${totalPerdidas}`);
+    addText("Win Rate", `${winRate.toFixed(2)}%`);
+    addText("Monto Total Ganado (Trading)", `${montoTotalGanado.toFixed(2)} USD`);
+    addText("Monto Total Perdido (Trading)", `${montoTotalPerdido.toFixed(2)} USD`);
+
+    // Add chart if available (as an image)
+    if (analisisChart) {
+        const chartDataUrl = analisisChart.toBase64Image();
+        doc.addImage(chartDataUrl, 'PNG', 10, y + 10, 100, 100);
+    }
+
+    doc.save("analisis_operaciones.pdf");
+}
+
 // Manejar análisis de ganancias/pérdidas
 formAnalisis.addEventListener("submit", async e => {
     e.preventDefault();
@@ -91,6 +135,38 @@ formAnalisis.addEventListener("submit", async e => {
     const gananciaPerdidaNeta = balanceFinalRango - balanceInicialRango;
     const porcentajeNeto = balanceInicialRango !== 0 ? (gananciaPerdidaNeta / balanceInicialRango) * 100 : 0;
 
+    let monthlyData = {};
+    operacionesRango.forEach(op => {
+        const date = new Date(op.fechaRegistro);
+        const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        if (!monthlyData[monthYear]) {
+            monthlyData[monthYear] = { ganadas: 0, perdidas: 0, montoGanado: 0, montoPerdido: 0, balanceInicio: op.balanceAntes, balanceFin: op.balanceDespues };
+        }
+        if (op.estado === 'ganada') {
+            monthlyData[monthYear].ganadas++;
+            monthlyData[monthYear].montoGanado += op.inversion * (op.retorno / 100);
+        } else if (op.estado === 'perdida') {
+            monthlyData[monthYear].perdidas++;
+            monthlyData[monthYear].montoPerdido += op.inversion;
+        }
+        monthlyData[monthYear].balanceFin = op.balanceDespues; // Update final balance for the month
+    });
+
+    let monthlyComparisonHtml = '<h4>Comparativa Mensual</h4>';
+    for (const monthYear in monthlyData) {
+        const data = monthlyData[monthYear];
+        const monthTotalOps = data.ganadas + data.perdidas;
+        const monthWinRate = monthTotalOps > 0 ? (data.ganadas / monthTotalOps) * 100 : 0;
+        const monthNetProfit = data.balanceFin - data.balanceInicio;
+        monthlyComparisonHtml += `
+            <div class="monthly-summary">
+                <h5>${monthYear}</h5>
+                <p>Ganadas: ${data.ganadas}, Perdidas: ${data.perdidas}, Win Rate: ${monthWinRate.toFixed(2)}%</p>
+                <p>Ganancia Neta Mensual: <span style="color: ${monthNetProfit >= 0 ? 'green' : 'red'};">${monthNetProfit.toFixed(2)} USD</span></p>
+            </div>
+        `;
+    }
+
     resultadoAnalisisDiv.innerHTML = `
         <h4>Análisis del Periodo</h4>
         <p><strong>Balance Inicial:</strong> ${balanceInicialRango.toFixed(2)} USD</p>
@@ -106,6 +182,9 @@ formAnalisis.addEventListener("submit", async e => {
         <p><strong>Win Rate:</strong> ${winRate.toFixed(2)}%</p>
         <p><strong>Monto Total Ganado (Trading):</strong> ${montoTotalGanado.toFixed(2)} USD</p>
         <p><strong>Monto Total Perdido (Trading):</strong> ${montoTotalPerdido.toFixed(2)} USD</p>
+        <hr>
+        ${monthlyComparisonHtml}
+        <button id="downloadPdfBtn" class="btn-export">Descargar Resumen PDF</button>
     `;
 
     // Lógica del gráfico
@@ -151,4 +230,11 @@ formAnalisis.addEventListener("submit", async e => {
         const ctx = document.getElementById('analisisChart').getContext('2d');
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     }
+
+    // Event listener para el botón de descarga de PDF
+    document.getElementById("downloadPdfBtn").addEventListener("click", () => {
+        generatePdf({
+            totalGanadas, totalPerdidas, montoTotalGanado, montoTotalPerdido, totalInversiones, totalRetiros, totalOperaciones, winRate, balanceInicialRango, balanceFinalRango, gananciaPerdidaNeta, porcentajeNeto
+        });
+    });
 });
