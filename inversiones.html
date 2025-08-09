@@ -42,7 +42,6 @@
             <option value="" disabled selected>Selecciona tipo</option>
             <option value="alcista">Alcista</option>
             <option value="bajista">Bajista</option>
-            <option value="inversion">Inversión</option>
           </select>
 
           <label for="retorno">Porcentaje de retorno (%):</label>
@@ -92,6 +91,16 @@
           <label for="montoRetiro">Monto a retirar (USD):</label>
           <input type="number" id="montoRetiro" step="0.01" placeholder="Ej: 100" required />
           <button type="submit">Retirar</button>
+        </form>
+      </div>
+
+      <!-- Formulario de Inversión -->
+      <div class="form-wrapper">
+        <h2>Registrar Inversión</h2>
+        <form id="formInversion">
+          <label for="montoInversion">Monto a invertir (USD):</label>
+          <input type="number" id="montoInversion" step="0.01" placeholder="Ej: 500" required />
+          <button type="submit">Invertir</button>
         </form>
       </div>
     </div>
